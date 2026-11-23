@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c1a2b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Quini 6 · Combinaciones poco populares</title>
+<style>
+:root{--bg:#0c1a2b;--card:#142840;--line:#24405f;--txt:#eef4fb;--mut:#8fa6bf;--ball:#dbe7f5;--ballTxt:#0c1a2b;--on:#ffc83d;--acc:#4fb3ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
+h1{font-size:1.35rem;margin:18px 0 4px}
+.sub{color:var(--mut);font-size:.9rem;margin:0 0 14px}
+nav{display:flex;gap:6px;margin-bottom:14px}
+nav button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--mut);font-weight:600;font-size:.95rem}
+nav button[aria-selected=true]{background:var(--card);color:var(--txt);border-color:var(--acc)}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.balls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 4px;min-height:52px}
+.b{width:48px;height:48px;border-radius:50%;background:var(--on);color:var(--ballTxt);display:grid;place-items:center;font-weight:800;font-size:1.15rem;animation:pop .25s ease-out both}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.empty{color:var(--mut);align-self:center}
+.btn{width:100%;padding:15px;border:0;border-radius:12px;background:var(--acc);color:#04233d;font-weight:800;font-size:1.05rem}
+.btn:active{transform:scale(.98)}
+.btn.sec{background:transparent;color:var(--txt);border:1px solid var(--line);font-weight:600;margin-top:8px;padding:12px}
+.row{display:flex;gap:8px}.row .btn{flex:1}
+.meter{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin:6px 0}
+.meter i{display:block;height:100%;background:var(--acc);width:0;transition:width .3s}
+.stats{display:flex;justify-content:space-between;color:var(--mut);font-size:.88rem}
+.stats b{color:var(--txt)}
+ul.r{margin:8px 0 0;padding-left:18px;color:var(--mut);font-size:.88rem}
+.grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:10px}
+.c{aspect-ratio:1;display:grid;place-items:center;border-radius:8px;background:var(--bg);color:var(--mut);font-size:.8rem;font-weight:700}
+.c.on{background:var(--on);color:var(--ballTxt)}
+.note{font-size:.82rem;color:var(--mut);border-left:3px solid var(--on);padding-left:10px;margin:12px 0}
+label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
+textarea{font-family:inherit;resize:vertical;min-height:120px}
+input,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:1rem}
+.h{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:.95rem}
+.h:last-child{border:0}.h small{color:var(--mut)}
+.res{font-size:1.6rem;font-weight:800;margin:4px 0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+button:focus-visible,input:focus-visible{outline:2px solid var(--on);outline-offset:2px}
+</style>
+</head>
+<body>
+<h1>Quini 6 · combinaciones poco populares</h1>
+<p class="sub">Genera jugadas que poca gente elige, para no compartir el pozo si ganás.</p>
+
+<nav role="tablist">
+  <button role="tab" aria-selected="true" data-t="gen">Generar</button>
+  <button role="tab" aria-selected="false" data-t="ev">Calculadora</button>
+  <button role="tab" aria-selected="false" data-t="his">Historial</button>
+</nav>
+
+<section id="gen" class="on">
+  <div class="card">
+    <div class="balls" id="balls" aria-live="polite"><span class="empty">Tocá “Generar jugada”</span></div>
+    <div class="meter"><i id="bar"></i></div>
+    <div class="stats"><span>Exclusividad <b id="score">–</b></span><span>Suma <b id="sum">–</b></span><span>Altos &gt;31 <b id="hi">–</b></span></div>
+    <ul class="r" id="why"></ul>
+    <div class="grid" id="grid"></div>
+  </div>
+  <button class="btn" id="go">Generar jugada</button>
+  <div class="row">
+    <button class="btn sec" id="copy">Copiar</button>
+    <button class="btn sec" id="share">Compartir</button>
+  </div>
+  <p class="note"><b>Ojo:</b> toda combinación tiene la misma probabilidad de salir (1 en 9.366.819). Esta app no aumenta tus chances de ganar: solo reduce la chance de repartir el premio si ganás. No hay forma de predecir el sorteo.</p>
+</section>
+
+<section id="ev">
+  <div class="card">
+    <label for="p1">Pozo Tradicional ($)</label><input id="p1" type="number" inputmode="decimal" placeholder="Ej: 1500000000">
+    <label for="p2">Pozo La Segunda ($)</label><input id="p2" type="number" inputmode="decimal" placeholder="Ej: 800000000">
+    <label for="p3">Pozo Revancha ($)</label><input id="p3" type="number" inputmode="decimal" placeholder="Ej: 600000000">
+    <label for="cost">Costo de tu boleta ($)</label><input id="cost" type="number" inputmode="decimal" placeholder="Ej: 1500">
+    <label for="ret">Impuesto sobre premios (%)</label><input id="ret" type="number" inputmode="decimal" value="28">
+    <label for="oth">Otros ganadores esperados (con quienes compartirías)</label><input id="oth" type="number" inputmode="decimal" value="0" step="0.1">
+  </div>
+  <button class="btn" id="calc">Calcular retorno esperado</button>
+  <div class="card" id="out" style="margin-top:12px;display:none">
+    <div class="stats"><span>Retorno por $1 jugado</span></div>
+    <div class="res" id="ratio">–</div>
+    <div class="stats"><span>Valor esperado: <b id="evv">–</b></span></div>
+    <p class="note" id="msg"></p>
+  </div>
+  <p class="note">Cálculo solo de los 6 aciertos de Tradicional, Segunda y Revancha. No incluye premios menores ni Pozo Extra, y el porcentaje de impuesto es editable: verificalo con la normativa vigente.</p>
+</section>
+
+<section id="his">
+  <div class="card">
+    <label for="win">Pegá los resultados del sorteo (una línea por modalidad)</label>
+    <textarea id="win" placeholder="Tradicional: 06 12 24 30 38 45&#10;Segunda: 04 11 12 14 30 43&#10;Revancha: 02 18 24 26 28 29&#10;Siempre Sale: 00 09 15 31 32 42"></textarea>
+    <button class="btn sec" id="chk">Comprobar aciertos</button>
+    <p class="note" id="wmsg" style="margin-bottom:0;white-space:pre-line">Se comparan todas las jugadas del historial. Borrá el historial antes de cada sorteo para comparar solo las jugadas de esa fecha.</p>
+  </div>
+  <div class="card" id="hl"><span class="empty">Todavía no generaste jugadas.</span></div>
+  <button class="btn sec" id="clr">Borrar historial</button>
+</section>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const rnd = globalThis.crypto || globalThis.msCrypto;
+
+// 6 números únicos de 0 a 45, sin sesgo de módulo
+function combinacion() {
+  const s = new Set(), buf = new Uint32Array(1), lim = 4294967296 - (4294967296 % 46);
+  while (s.size < 6) {
+    rnd.getRandomValues(buf);
+    if (buf[0] < lim) s.add(buf[0] % 46);
+  }
+  return [...s].sort((a, b) => a - b);
+}
+
+// Puntaje de "impopularidad" (heurístico, no validado con datos reales)
+function evaluar(c) {
+  let p = 100; const why = [];
+  const f = c.filter(n => n >= 1 && n <= 31).length;
+  if (f > 3) { p -= (f - 3) * 12; why.push(`${f} números tipo fecha (1-31)`); }
+  let run = 1, best = 1, pairs = 0;
+  for (let i = 1; i < 6; i++) {
+    if (c[i] - c[i - 1] === 1) { run++; pairs++; best = Math.max(best, run); } else run = 1;
+  }
+  if (pairs >= 1) { p -= pairs * 8 + (best >= 3 ? 12 : 0); why.push(`racha de ${best} consecutivos`); }
+  const d = c[1] - c[0];
+  if (c.every((n, i) => i === 0 || n - c[i - 1] === d)) { p -= 40; why.push("progresión aritmética"); }
+  const sum = c.reduce((a, b) => a + b, 0);
+  if (sum < 105 || sum > 165) { p -= 10; why.push(`suma extrema (${sum})`); }
+  const pares = c.filter(n => n % 2 === 0).length;
+  if (pares === 0 || pares === 6) { p -= 15; why.push("todos pares o todos impares"); }
+  return { p: Math.max(0, p), sum, hi: c.filter(n => n > 31).length, why };
+}
+
+// Siempre devuelve la mejor candidata vista (nunca null)
+function mejorJugada(umbral = 85, max = 800) {
+  let best = null;
+  for (let i = 0; i < max; i++) {
+    const c = combinacion(), a = evaluar(c);
+    if (!best || a.p > best.a.p) best = { c, a };
+    if (a.p >= umbral) break;
+  }
+  return best;
+}
+
+// Estado y UI
+let actual = null;
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem("q6h") || "[]"); } catch { return []; } },
+  set(v) { try { localStorage.setItem("q6h", JSON.stringify(v)); } catch {} }
+};
+
+const grid = $("grid");
+for (let i = 0; i <= 45; i++) { const d = document.createElement("div"); d.className = "c"; d.id = "c" + i; d.textContent = pad(i); grid.appendChild(d); }
+
+function mostrar({ c, a }) {
+  $("balls").innerHTML = c.map(n => `<div class="b">${pad(n)}</div>`).join("");
+  document.querySelectorAll(".c").forEach(x => x.classList.remove("on"));
+  c.forEach(n => $("c" + n).classList.add("on"));
+  $("score").textContent = a.p + "/100"; $("bar").style.width = a.p + "%";
+  $("sum").textContent = a.sum; $("hi").textContent = a.hi + "/6";
+  $("why").innerHTML = a.why.map(w => `<li>${w}</li>`).join("");
+}
+
+function texto() { return actual ? actual.c.map(pad).join(" - ") : ""; }
+
+$("go").onclick = () => {
+  actual = mejorJugada();
+  mostrar(actual);
+  const h = store.get(); h.unshift({ t: Date.now(), c: actual.c, p: actual.a.p }); store.set(h.slice(0, 30));
+  renderH();
+  if (navigator.vibrate) navigator.vibrate(15);
+};
+
+$("copy").onclick = async () => {
+  if (!actual) return;
+  try { await navigator.clipboard.writeText(texto()); $("copy").textContent = "Copiado"; }
+  catch { $("copy").textContent = texto(); }
+  setTimeout(() => $("copy").textContent = "Copiar", 1500);
+};
+$("share").onclick = async () => {
+  if (!actual) return;
+  if (navigator.share) { try { await navigator.share({ text: "Quini 6: " + texto() }); } catch {} }
+  else $("copy").click();
+};
+
+// Historial
+const MODS = [["T", "Tradicional"], ["S", "Segunda"], ["R", "Revancha"], ["SS", "Siempre Sale"]];
+let win = {};
+try { win = JSON.parse(localStorage.getItem("q6w2") || "{}") || {}; } catch {}
+const cargadas = () => MODS.filter(([k]) => (win[k] || []).length === 6);
+function renderH() {
+  const h = store.get();
+  $("hl").innerHTML = h.length ? h.map(x => {
+    const dt = new Date(x.t).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    const cg = cargadas();
+    const info = cg.length
+      ? cg.map(([k, nombre]) => {
+          const n = x.c.filter(v => win[k].includes(v)).length;
+          return `<span style="color:${n >= 4 ? "var(--on)" : "inherit"};font-weight:${n >= 4 ? 800 : 400}">${nombre}: ${n}</span>`;
+        }).join(" · ")
+      : `Exclusividad ${x.p}/100`;
+    return `<div class="h" style="display:block"><div style="display:flex;justify-content:space-between"><b>${x.c.map(pad).join(" ")}</b><small>${dt}</small></div><small>${info}</small></div>`;
+  }).join("") : '<span class="empty">Todavía no generaste jugadas.</span>';
+}
+$("clr").onclick = () => { store.set([]); renderH(); };
+// Lee el texto pegado: reconoce nombres de modalidad; sin nombre, asigna en orden
+function parsear(txt) {
+  const out = {}, orden = ["T", "S", "R", "SS"];
+  const claves = [["X", /extra/i], ["SS", /siempre/i], ["S", /segunda/i], ["R", /revancha/i], ["T", /tradicional|primer/i]];
+  let pend = null;
+  for (const raw of txt.split(/\r?\n/)) {
+    const linea = raw.trim();
+    if (!linea) continue;
+    const m = claves.find(([, re]) => re.test(linea));
+    const nums = [...new Set((linea.match(/\d+/g) || []).map(Number))].filter(n => n <= 45);
+    if (nums.length !== 6) { if (m) pend = m[0]; continue; }
+    let k = m ? m[0] : pend;
+    pend = null;
+    if (k === "X") continue;
+    if (!k) k = orden.find(o => !out[o]);
+    if (k && !out[k]) out[k] = nums.sort((a, b) => a - b);
+  }
+  return out;
+}
+
+$("win").value = cargadas().map(([k, n]) => `${n}: ${win[k].map(pad).join(" ")}`).join("\n");
+$("chk").onclick = () => {
+  const res = parsear($("win").value);
+  if (!Object.keys(res).length) {
+    $("wmsg").textContent = "No encontré líneas con 6 números distintos entre 0 y 45. Pegá una línea por modalidad.";
+    return;
+  }
+  win = res;
+  try { localStorage.setItem("q6w2", JSON.stringify(win)); } catch {}
+  const h = store.get(), cg = cargadas();
+  const leidas = cg.map(([k, n]) => `${n}: ${win[k].map(pad).join(" ")}`).join("\n");
+  let msg = "Leí:\n" + leidas;
+  if (h.length) {
+    const mejores = cg.map(([k, n]) => [n, h.reduce((m, x) => Math.max(m, x.c.filter(v => win[k].includes(v)).length), 0)]);
+    msg += "\n\nMejor jugada → " + mejores.map(([n, b]) => `${n}: ${b}`).join(" · ");
+    const gan = mejores.filter(([, b]) => b === 6).map(([n]) => n);
+    if (gan.length) msg += `\n\n6 aciertos en ${gan.join(" y ")}. Verificalo con el resultado oficial.`;
+  } else msg += "\n\nTodavía no hay jugadas en el historial.";
+  $("wmsg").textContent = msg;
+  renderH();
+};
+renderH();
+
+// Calculadora de valor esperado (6 aciertos, pozo dividido entre ganadores)
+const P6 = 1 / 9366819;
+$("calc").onclick = () => {
+  const v = id => Math.max(0, parseFloat($(id).value) || 0);
+  const pozos = v("p1") + v("p2") + v("p3"), cost = v("cost");
+  const net = 1 - Math.min(100, v("ret")) / 100, share = 1 + v("oth");
+  const ev = pozos * net / share * P6;
+  $("out").style.display = "block";
+  $("evv").textContent = "$" + ev.toLocaleString("es-AR", { maximumFractionDigits: 2 });
+  if (cost > 0) {
+    const r = ev / cost;
+    $("ratio").textContent = "$" + r.toFixed(2);
+    $("msg").textContent = r >= 1
+      ? "El retorno esperado supera el costo (solo por los 6 aciertos)."
+      : `Por cada $1 jugado, recuperás en promedio $${r.toFixed(2)}. Jugar tiene valor esperado negativo.`;
+  } else {
+    $("ratio").textContent = "–";
+    $("msg").textContent = "Ingresá el costo de la boleta para ver el retorno.";
+  }
+};
+
+// Pestañas
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll("section").forEach(s => s.classList.toggle("on", s.id === b.dataset.t));
+});
+</script>
+</body>
+</html>
